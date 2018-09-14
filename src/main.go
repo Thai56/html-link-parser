@@ -15,16 +15,12 @@ type Link struct {
 	Title string
 }
 
-func getBody(doc *html.Node, anchorSlice *[]*html.Node, gotAnchors chan bool) (*html.Node, error) {
-	var b *html.Node
+func getLinks(doc *html.Node) ([]*html.Node, error) {
+	var b []*html.Node
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		fmt.Println("DATA ", n.Data)
-		if n.Type == html.ElementNode && n.Data == "body" {
-			b = n
-		}
 		if n.Type == html.ElementNode && n.Data == "a" {
-			*anchorSlice = append(*anchorSlice, n)
+			b = append(b, n)
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			f(c)
@@ -32,8 +28,6 @@ func getBody(doc *html.Node, anchorSlice *[]*html.Node, gotAnchors chan bool) (*
 	}
 	f(doc)
 	if b != nil {
-		fmt.Println("ANCHORS! ", anchorSlice)
-		gotAnchors <- true
 		return b, nil
 	}
 	return nil, errors.New("Missing <body> in the node tree")
@@ -55,11 +49,10 @@ func main() {
 		fmt.Println("error Parsing HTM", err)
 	}
 
-	var anchorSlice []*html.Node
-
-	gotAnchors := make(chan bool)
-	go getBody(doc, &anchorSlice, gotAnchors)
-	<-gotAnchors
+	anchorSlice, err := getLinks(doc)
+	if err != nil {
+		fmt.Println("Could not get links", err)
+	}
 
 	for _, a := range anchorSlice {
 		anchor := renderNode(a)
