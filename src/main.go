@@ -39,6 +39,13 @@ func getBody(doc *html.Node, anchorSlice *[]*html.Node, gotAnchors chan bool) (*
 	return nil, errors.New("Missing <body> in the node tree")
 }
 
+func renderNode(n *html.Node) string {
+	var buf bytes.Buffer
+	w := io.Writer(&buf)
+	html.Render(w, n)
+	return buf.String()
+}
+
 func main() {
 	pwd, _ := os.Getwd()
 	htm, _ := ioutil.ReadFile(pwd + "/src/templates/second.html")
@@ -63,11 +70,4 @@ func main() {
 	}
 
 	fmt.Println("anchorSlice ", anchorSlice)
-}
-
-func renderNode(n *html.Node) string {
-	var buf bytes.Buffer
-	w := io.Writer(&buf)
-	html.Render(w, n)
-	return buf.String()
 }
