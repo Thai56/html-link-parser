@@ -8,6 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	//"strings"
+	//"github.com/PuerkitoBio/goquery"
 )
 
 type Link struct {
@@ -40,8 +42,9 @@ func renderNode(n *html.Node) string {
 	return buf.String()
 }
 
-func main() {
+func getDoc() *html.Node {
 	pwd, _ := os.Getwd()
+	//TODO: Test with different edge cases
 	htm, _ := ioutil.ReadFile(pwd + "/src/templates/second.html")
 
 	doc, err := html.Parse(bytes.NewReader(htm))
@@ -49,18 +52,33 @@ func main() {
 		fmt.Println("error Parsing HTM", err)
 	}
 
+	return doc
+}
+
+type Links struct {
+	links []Links
+}
+
+func formatLinksStruct(anchorSlice []*html.Node) []Link {
+	var links []Link
+	for _, a := range anchorSlice {
+		title := renderNode(a.FirstChild)
+		href := a.Attr[0].Val
+		links = append(links, Link{href, title})
+	}
+	return links
+}
+
+func main() {
+	doc := getDoc()
+
 	anchorSlice, err := getLinks(doc)
 	if err != nil {
 		fmt.Println("Could not get links", err)
 	}
 
-	for _, a := range anchorSlice {
-		anchor := renderNode(a)
-		title := renderNode(a.FirstChild)
-		//TODO: find a way to get the Href for the Link struct
-		fmt.Println("anchor ", anchor)
-		fmt.Println("title ", title)
-	}
+	var links []Link
+	links = formatLinksStruct(anchorSlice)
 
-	fmt.Println("anchorSlice ", anchorSlice)
+	fmt.Println(links)
 }
